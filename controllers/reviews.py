@@ -47,7 +47,12 @@ def get_review(review_id: int, db: Session = Depends(get_db)):
     return review
 
 @router.put("/reviews/{review_id}", response_model=ReviewResponseSerializer)
-def update_review(review_id: int, review: ReviewSerializer, db: Session = Depends(get_db)):
+def update_review(
+    review_id: int,
+    review: ReviewSerializer,
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(get_current_user)
+):
     existing_review = db.query(ReviewModel).filter(ReviewModel.id == review_id).first()
 
     if not existing_review:
@@ -55,7 +60,6 @@ def update_review(review_id: int, review: ReviewSerializer, db: Session = Depend
 
     existing_review.content = review.content
     existing_review.rating = review.rating
-    existing_review.user_id = review.user_id
     existing_review.book_id = review.book_id
 
     db.commit()
@@ -64,7 +68,11 @@ def update_review(review_id: int, review: ReviewSerializer, db: Session = Depend
     return existing_review
 
 @router.delete("/reviews/{review_id}")
-def delete_review(review_id: int, db: Session = Depends(get_db)):
+def delete_review(
+    review_id: int,
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(get_current_user)
+):
     review = db.query(ReviewModel).filter(ReviewModel.id == review_id).first()
 
     if not review:
