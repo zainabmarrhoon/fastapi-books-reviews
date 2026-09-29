@@ -12,10 +12,11 @@ class UserModel(BaseModel):
 
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True)  # Each username must be unique
-    email = Column(String, unique=True)  # Each email must be unique
+    username = Column(String, unique=True)
+    email = Column(String, unique=True)
     password = Column(String, nullable=True)
+
+    reviews = relationship("ReviewModel", back_populates="user")
 
     def set_password(self, plain_txt_password: str):
         self.password = pwd_context.hash(plain_txt_password)
@@ -25,9 +26,9 @@ class UserModel(BaseModel):
 
     def generate_token(self):
         payload = {
-        "exp": datetime.now(timezone.utc) + timedelta(days=1),  # Expiration time (1 day)
-        "iat": datetime.now(timezone.utc),  # Issued at time
-        "sub": str(self.id),  # Subject - the user ID
+            "exp": datetime.now(timezone.utc) + timedelta(days=1),
+            "iat": datetime.now(timezone.utc),
+            "sub": str(self.id),
         }
 
         token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
