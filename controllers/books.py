@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models.book import BookModel
@@ -25,4 +25,36 @@ def create_book(book: BookSerializer, db: Session = Depends(get_db)):
 
 @router.get("/books/{book_id}", response_model=BookResponseSerializer)
 def get_book(book_id: int, db: Session = Depends(get_db)):
-    return db.query(BookModel).filter(BookModel.id == book_id).first()
+    book = db.query(BookModel).filter(BookModel.id == book_id).first()
+
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    return book
+
+@router.put("/books/{book_id}", response_model=BookResponseSerializer)
+def update_book(book_id: int, book: BookSerializer, db: Session = Depends(get_db)):
+    existing_book = db.query(BookModel).filter(BookModel.id == book_id).first()
+
+    if not existing_book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    existing_book.title = book.title
+    existing_book.author = book.author
+
+    db.commit()
+    db.refresh(existing_book)
+
+    return existing_book
+
+@router.delete("/books/{book_id}")
+def delete_book(book_id: int, db: Session = Depends(get_db)):
+    book = db.query(BookModel).filter(BookModel.id == book_id).first()
+
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    db.delete(book)
+    db.commit()
+
+    return {"message": "Book deleted successfully"}
